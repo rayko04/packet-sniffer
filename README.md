@@ -19,7 +19,7 @@ For example:
 Capture packets originating from interface ```wlan0``` and goting to port 678 of ip 34.107.221.82:
 
 ```
-./snipher -f snipher.log --sif wlan0 --dport  678 --dip 34.107.221.82
+./sniffer -f sniffer.log --sif wlan0 --dport  678 --dip 34.107.221.82
 ```
 
 You can use mulitple options for filtering while capturing packets with Snipher :
