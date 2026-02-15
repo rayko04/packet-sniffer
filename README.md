@@ -1,54 +1,47 @@
-SOCKETS: End points of a communication. An interface b/w application and network stack(kernel).
+# Sniffer
+A network packet sniffer created from scratch in c++ using raw sockets.
 
-1) Stream Sockets: uses tcp. connection oriented. SOCK_STREAM in c++
-2) Datagram Sockets: uses udp, connectionless. SOCK_DGRAM in c++
+## Build
 
-The control of upper two types is under kernel. It handles header stripping at each layer and then transfers pure data to application.
+```
+g++ sniffer.cpp -o sniffer
+```
 
-3) Raw / Packet Sockets: Manually build ip header. 
-Control is left under developer. The whole packet is received as it is along with other layer headers untouched by kernel.(ie data link layer/ethernet header (mac addr info etc), ip header, transport header are all intact with the packet and not stripped yet) kernel creates a copy of the packet receives at datalink/network without removing headers and send to the packet/raw socket from where it is passed to application requestion it(sniffer). Meantime the original packet is passed throush osi layer and towards the actual target application.
-This is done so for cases when you need to sniff the packet or look into header infos.
+## Usage
 
-Raw sockets let you access network layer and above layer headers. Packet Sockets let you access even data link layer header.
-In short these let you access lower layer headers.
+```
+sudo ./sniffer [OPTIONS]
+```
 
-    RAW SOCKETS FOR PACKET SNIFFER: 
-        Usual c/c++ sniffers use libpcap library which uses raw sockets. I use raw sockets here for learning.
 
-    RAW SOCKET IMPLEMENTATION: 
-        SOCK_RAW in cpp.
-        for sending/writing data IPPROTO_RAW is used.
-        for receivig/reading data IPPROTO_Tcp/Udp is used.
-        Socket(AF_INET, SOCK_RAW, IPPROTO_RAW).
+For example:
 
-    PACKET SOCKET IMPLEMENTAION:
-        socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))
-            htons(ETH_P_ALL): cpturing all kinds of packets
-            other may be 802.3, ip related only etc
-            htons: host byte order(little endian) to network(big endian) short(16bits)
-            ethpall header is provided by the OS
+Capture packets originating from interface ```wlan0``` and goting to port 678 of ip 34.107.221.82:
 
-    Bind/connect syscalls arent needed. only creation and then recvfrom().
+```
+./snipher -f snipher.log --sif wlan0 --dport  678 --dip 34.107.221.82
+```
 
-PROMISCUOUS MODE: when an interface allows a socket to recv packets meant for not only itself but all other interfaces aswell.
-Raw/packet sockets can enable this mode for the particular interface it is used on, hence it can sniff all packets.
+You can use mulitple options for filtering while capturing packets with Snipher :
 
-CONDITON TO USE RAW SOCKETS: 
-    to use raw docket a process must either
-        have effetive id as 0(ie root) or
-        have capability CAP_NET_RAW.
+- **--tcp** : Capture only TCP packets
+- **--udp** : Capture only UDP packets
+- **--sip** : Filter packets by given source IP
+- **--dip** : Filter packets by given destination IP
+- **--sif** : Filter packets by source interface set as given interface. Matches source MAC of the packet against provided interface's MAC adress. Useful for filtering packets leaving from a given interface.
+- **--dif** : Filter packets by destination interface set as given interface. Matches destination MAC of the packet against provided interface's MAC adress. Useful for filtering packets arriving at a given interface on the machine.
+- **--sport** : Filter packets by source port
+- **--dport** : Filter packets by destination port
+- **--logfile** : Name of th log file for capturing packet data. Defaults to snipher_log.tx.
 
-STEPS:
-1)  struct for filter options.
-2)  sockadddr_in global objects for ease storing of ips
-3)  options handling input loop
-4)  get mac of interfaces if used in filter options
-5)  create socket and start recvfrom()
-6)  start processing
-7)  parse ethhdr and filter mac/interface if any
-8)  parse iphdr and filter ip if any
-9)  parse tcphdr/udphdr and filter if any
-10) log everything!!!
+## What I Learned
 
-NOTES:
-1) struct sockaddr describes a generic socket, sockaddr_in describes an ipv4 socket, sockaddr_in6 describes an ipv6 socket.
+- Raw Socket Programming
+- Ethernet IP TCP/UDP headers
+- Endian Handling
+- Packet Filtering 
+
+## References
+
+- [Packet Sniffer Tutorial by eszotec](https://youtu.be/1Quv19IVFsc?si=rkuDLCqnQZerRRtZ) – Used for guidance and learning while building this project.
+
